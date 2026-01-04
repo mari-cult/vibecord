@@ -477,3 +477,17 @@ func newEmptyMessagePlaceholder() gtk.Widgetter {
 
 	return status
 }
+
+// JoinVoice joins the specified voice channel.
+func (p *ChatPage) JoinVoice(chID discord.ChannelID) {
+	if err := p.Sidebar.JoinVoiceChannel(chID); err != nil {
+		slog.Error("failed to join voice channel", "channel_id", chID, "err", err)
+	}
+}
+
+// LeaveVoice leaves the current voice channel.
+func (p *ChatPage) LeaveVoice() {
+	if err := p.Sidebar.LeaveVoiceChannel(); err != nil {
+		slog.Error("failed to leave voice channel", "err", err)
+	}
+}

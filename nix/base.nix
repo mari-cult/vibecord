@@ -17,6 +17,11 @@
 		libspelling
 		gtksourceview5
 
+		# Voice chat support
+		libopus
+		libpulseaudio
+		pkg-config
+
 		# Optional
 
 		gst_all_1.gst-plugins-good

@@ -27,6 +27,10 @@ type Sidebar struct {
 	Guilds *guilds.View
 	Right  *gtk.Stack
 
+	// Voice components
+	VoiceManager *gtkcord.VoiceManager
+	VoiceBar     *VoiceBar
+
 	// Keep track of the last child to remove.
 	current struct {
 		w gtk.Widgetter
@@ -54,8 +58,11 @@ var sidebarCSS = cssutil.Applier("sidebar-sidebar", `
 
 // NewSidebar creates a new Sidebar.
 func NewSidebar(ctx context.Context) *Sidebar {
+	state := gtkcord.FromContext(ctx)
+
 	s := Sidebar{
-		ctx: ctx,
+		ctx:          ctx,
+		VoiceManager: gtkcord.NewVoiceManager(state),
 	}
 
 	s.Guilds = guilds.NewView(ctx)
@@ -113,10 +120,18 @@ func NewSidebar(ctx context.Context) *Sidebar {
 		gtkutil.MenuItem("_Quit", "app.quit"),
 	})
 
+	// Create voice bar for voice channel controls
+	s.VoiceBar = NewVoiceBar(ctx, s.VoiceManager)
+
+	// Bottom bar container to hold voice bar and user bar
+	bottomBars := gtk.NewBox(gtk.OrientationVertical, 0)
+	bottomBars.Append(s.VoiceBar)
+	bottomBars.Append(userBar)
+
 	// TODO: consider if we can merge this ToolbarView with the one in channels
 	// and direct.
 	rightWrap := adw.NewToolbarView()
-	rightWrap.AddBottomBar(userBar)
+	rightWrap.AddBottomBar(bottomBars)
 	rightWrap.SetContent(s.Right)
 
 	s.Box = gtk.NewBox(gtk.OrientationHorizontal, 0)
@@ -267,4 +282,41 @@ func (s *Sidebar) SelectChannel(chID discord.ChannelID) {
 		direct := s.OpenDMs()
 		direct.SelectChannel(chID)
 	}
+}
+
+// JoinVoiceChannel joins the specified voice channel.
+func (s *Sidebar) JoinVoiceChannel(chID discord.ChannelID) error {
+	state := gtkcord.FromContext(s.ctx)
+	ch, err := state.Cabinet.Channel(chID)
+	if err != nil {
+		slog.Error(
+			"cannot join voice channel since it's not found in state",
+			"channel_id", chID,
+			"err", err)
+		return err
+	}
+
+	// Disconnect voice bar first in case we're switching channels
+	s.VoiceBar.Disconnect()
+
+	if err := s.VoiceManager.JoinChannel(s.ctx, ch.GuildID, chID); err != nil {
+		slog.Error(
+			"failed to join voice channel",
+			"channel_id", chID,
+			"err", err)
+		return err
+	}
+
+	s.VoiceBar.Connect(ch.GuildID, chID)
+	return nil
+}
+
+// LeaveVoiceChannel leaves the current voice channel.
+func (s *Sidebar) LeaveVoiceChannel() error {
+	if err := s.VoiceManager.LeaveChannel(s.ctx); err != nil {
+		slog.Error("failed to leave voice channel", "err", err)
+		return err
+	}
+	s.VoiceBar.Disconnect()
+	return nil
 }

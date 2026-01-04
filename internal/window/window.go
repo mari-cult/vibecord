@@ -108,6 +108,7 @@ func (w *Window) initActions() {
 		"open-dms":       func() { w.useChatPage((*ChatPage).OpenDMs) },
 		"reset-view":     func() { w.useChatPage((*ChatPage).ResetView) },
 		"quick-switcher": func() { w.useChatPage((*ChatPage).OpenQuickSwitcher) },
+		"leave-voice":    func() { w.useChatPage((*ChatPage).LeaveVoice) },
 	})
 
 	gtkutil.AddActionCallbacks(w, map[string]gtkutil.ActionCallback{
@@ -129,6 +130,16 @@ func (w *Window) initActions() {
 					"opening guild from window-scoped action",
 					"guild_id", id)
 				w.useChatPage(func(p *ChatPage) { p.OpenGuild(id) })
+			},
+		},
+		"join-voice": {
+			ArgType: gtkcord.SnowflakeVariant,
+			Func: func(variant *glib.Variant) {
+				id := discord.ChannelID(variant.Int64())
+				slog.Debug(
+					"joining voice channel from window-scoped action",
+					"channel_id", id)
+				w.useChatPage(func(p *ChatPage) { p.JoinVoice(id) })
 			},
 		},
 	})

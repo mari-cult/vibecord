@@ -4,6 +4,10 @@ go 1.24.0
 
 // replace github.com/diamondburned/gotk4/pkg => github.com/diamondburned/gotk4/pkg v0.3.2-0.20250222233909-d6bdcc0f7298
 
+// Use fork with aead_aes256_gcm_rtpsize voice encryption fix (PR #493)
+// Note: This fix only supports SENDING voice, not receiving (reading is still broken)
+replace github.com/diamondburned/arikawa/v3 => github.com/apkatsikas/arikawa/v3 v3.0.0-20251224175254-2c9baaef3f43
+
 require (
 	github.com/diamondburned/adaptive v0.0.2-0.20221227093656-fa139be203a8
 	github.com/diamondburned/arikawa/v3 v3.6.0
@@ -15,9 +19,11 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/enescakir/emoji v1.0.0
 	github.com/ianlancetaylor/cgosymbolizer v0.0.0-20250410214317-b8ecc8b6bbe6
+	github.com/jfreymuth/pulse v0.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/sahilm/fuzzy v0.1.1
 	github.com/yuin/goldmark v1.7.11
+	gopkg.in/hraban/opus.v2 v2.0.0-20230925203106-0188a62cb302
 	libdb.so/ctxt v0.0.0-20240229093153-2db38a5d3c12
 	libdb.so/gotk4-sourceview/pkg v0.0.0-20240818070527-98263515a466
 	libdb.so/gotk4-spelling/pkg v0.0.0-20241128063647-a9edc40bddb0

@@ -489,6 +489,20 @@ var _ = cssutil.WriteCSS(`
 		font-size: 0.8em;
 		opacity: 0.75;
 	}
+	.channel-item-voice-join {
+		opacity: 0;
+		min-width: 24px;
+		min-height: 24px;
+		padding: 2px;
+		margin-right: 4px;
+		border-radius: 50%;
+	}
+	.channel-item-voice-joinable:hover .channel-item-voice-join {
+		opacity: 1;
+	}
+	.channel-item-voice-join:hover {
+		background: alpha(@success_color, 0.3);
+	}
 `)
 
 func newChannelItemVoice(state *gtkcord.State, ch *discord.Channel) gtk.Widgetter {
@@ -497,10 +511,12 @@ func newChannelItemVoice(state *gtkcord.State, ch *discord.Channel) gtk.Widgette
 	label := gtk.NewLabel(ch.Name)
 	label.SetEllipsize(pango.EllipsizeEnd)
 	label.SetXAlign(0)
+	label.SetHExpand(true)
 	label.SetTooltipText(ch.Name)
 
 	top := gtk.NewBox(gtk.OrientationHorizontal, 0)
 	top.AddCSSClass("channel-item")
+	top.AddCSSClass("channel-item-voice-joinable")
 	top.Append(icon)
 	top.Append(label)
 
@@ -521,23 +537,22 @@ func newChannelItemVoice(state *gtkcord.State, ch *discord.Channel) gtk.Widgette
 		top.Append(counter)
 	}
 
+	// Add join button for voice channel
+	chID := ch.ID
+	joinBtn := gtk.NewButtonFromIconName("call-start-symbolic")
+	joinBtn.AddCSSClass("channel-item-voice-join")
+	joinBtn.SetTooltipText("Join Voice Channel")
+	joinBtn.SetVAlign(gtk.AlignCenter)
+	joinBtn.SetHasFrame(false)
+	joinBtn.ConnectClicked(func() {
+		parent := gtk.BaseWidget(top.Parent())
+		if parent != nil {
+			parent.ActivateAction("win.join-voice", gtkcord.NewChannelIDVariant(chID))
+		}
+	})
+	top.Append(joinBtn)
+
 	return top
-
-	// TODO: fix read indicator alignment. This probably should be in a separate
-	// ListModel instead.
-
-	// box := gtk.NewBox(gtk.OrientationVertical, 0)
-	// box.AddCSSClass("channel-item-voice")
-	// box.Append(top)
-
-	// voiceStates, _ := state.VoiceStates(ch.GuildID)
-	// for _, voiceState := range voiceStates {
-	// 	if voiceState.ChannelID == ch.ID {
-	// 		box.Append(newVoiceParticipant(state, voiceState))
-	// 	}
-	// }
-
-	// return box
 }
 
 func newVoiceParticipant(state *gtkcord.State, voiceState discord.VoiceState) gtk.Widgetter {
